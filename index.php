@@ -1,16 +1,147 @@
-<title>Cài đặt thành công</title>
+<?php
+/**
+ * index
+ * 
+ * @package Sngine v2+
+ * @author Zamblek
+ */
 
-<h1>Chúc mừng bạn đã cài đặt thành công Heroku App!</h1>
+// fetch bootstrap
+require('bootstrap.php');
 
-Hãy đăng nhập vào <a href="/manager">manager</a> để quản lí file hoặc up code. Xem thêm về thông tin gói php của Heroku <a href="/info.php">tại đây</a>
+// check user logged in
+if(!$user->_logged_in) {
 
-Sau khi đăng nhập thành công hãy xóa các file 
-<ul>
- <li><b>index.php</b></li>
- <li><b>info.php</b></li>
- <li><b>README.md</b></li>
-</ul>
-Nếu bạn không cần dùng composer hãy xóa <b>composer.json</b> và mục <b>vendor</b>
+    // page header
+	page_header(__("Chào mừng đến với").' '.$system['system_title']);
 
-<h3><font color="red">Lưu ý!</font></h3>
-Không được xóa các tệp khác ngoài các tệp nêu trên, như <b>.heroku</b>, <b>.composer</b> v.vv
+} else {
+
+	// valid inputs
+	$valid['view'] = array('', 'search', 'pages', 'groups', 'create_page', 'create_group', 'games');
+	if(!in_array($_GET['view'], $valid['view'])) {
+		_error(404);
+	}
+
+	try {
+
+		// get my pages
+		$pages = $user->get_pages();
+		/* assign variables */
+		$smarty->assign('pages', $pages);
+
+		// get my groups
+		$groups = $user->get_groups();
+		/* assign variables */
+		$smarty->assign('groups', $groups);
+
+		// get new people
+		$new_people = $user->get_new_people(0, true);
+		/* assign variables */
+		$smarty->assign('new_people', $new_people);
+
+		// get new pages
+		$new_pages = $user->get_pages( array('suggested' => true));
+		/* assign variables */
+		$smarty->assign('new_pages', $new_pages);
+
+		// get new groups
+		$new_groups = $user->get_groups( array('suggested' => true));
+		/* assign variables */
+		$smarty->assign('new_groups', $new_groups);
+
+		// get ads
+		$ads = $user->ads('home');
+		/* assign variables */
+		$smarty->assign('ads', $ads);
+
+		// get widget
+		$widget = $user->widget('home');
+		/* assign variables */
+		$smarty->assign('widget', $widget);
+
+
+		// get content
+		switch ($_GET['view']) {
+			case '':
+				// page header
+				page_header($system['system_title']);
+
+				// get posts (newsfeed)
+				$posts = $user->get_posts();
+				/* assign variables */
+				$smarty->assign('posts', $posts);
+				break;
+
+			case 'search':
+				// page header
+				page_header(__("Search"));
+
+				// search
+				if(isset($_GET['query'])) {
+					/* get results */
+					$results = $user->search($_GET['query']);
+					/* assign variables */
+					$smarty->assign('query', $_GET['query']);
+					$smarty->assign('results', $results);
+					$smarty->assign('results_num', count($results));
+				}
+				break;
+
+			case 'pages':
+				// page header
+				page_header(__("Trang"));
+				break;
+
+			case 'groups':
+				// page header
+				page_header(__("Nhóm"));
+				break;
+
+			case 'create_page':
+				// page header
+				page_header($system['system_title']." &rsaquo; ".__("Tạo trang"));
+
+				// get pages categories
+				$categories = $user->get_pages_categories();
+				/* assign variables */
+				$smarty->assign('categories', $categories);
+				break;
+
+			case 'create_group':
+				// page header
+				page_header($system['system_title']." &rsaquo; ".__("Tạo nhóm"));
+				break;
+
+			case 'games':
+				// games enabled
+				if(!$system['games_enabled']) {
+					_error(404);
+				}
+
+				// page header
+				page_header($system['system_title']." &rsaquo; ".__("Trò chơi"));
+
+				// get games
+				$games = $user->get_games();
+				/* assign variables */
+				$smarty->assign('games', $games);
+				break;
+
+			default:
+				_error(404);
+				break;
+		}
+
+    } catch (Exception $e) {
+        _error(__("Error"), $e->getMessage());
+    }
+
+	// assign variables
+	$smarty->assign('view', $_GET['view']);
+}
+
+// page footer
+page_footer("index");
+
+?>
